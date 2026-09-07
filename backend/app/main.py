@@ -18,10 +18,11 @@ async def lifespan(_: FastAPI):
 
 app = FastAPI(title="StudyBuddyAI API", version="0.1.0", lifespan=lifespan)
 
+origins = [item.strip() for item in settings.cors_origins.split(",") if item.strip()]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
+    allow_origins=origins or ["*"],
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
