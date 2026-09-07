@@ -3,6 +3,8 @@ import { useState } from "react";
 import { ScrollView, StyleSheet, View } from "react-native";
 import { Button, Chip, Text } from "react-native-paper";
 
+import { saveSubjects } from "../services/subjects-storage";
+
 const SUBJECTS = [
   "Mathematics",
   "English",
@@ -18,6 +20,7 @@ const SUBJECTS = [
 
 export default function SubjectsScreen() {
   const [selected, setSelected] = useState<string[]>([]);
+  const [saving, setSaving] = useState(false);
 
   function toggleSubject(subject: string) {
     setSelected((current) =>
@@ -25,6 +28,21 @@ export default function SubjectsScreen() {
         ? current.filter((item) => item !== subject)
         : [...current, subject],
     );
+  }
+
+  async function continueToHome() {
+    setSaving(true);
+    try {
+      await saveSubjects(selected);
+      router.replace("/home");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function skip() {
+    await saveSubjects([]);
+    router.replace("/home");
   }
 
   return (
@@ -54,14 +72,15 @@ export default function SubjectsScreen() {
 
         <Button
           mode="contained"
-          disabled={selected.length === 0}
-          onPress={() => router.replace("/home")}
+          disabled={selected.length === 0 || saving}
+          loading={saving}
+          onPress={continueToHome}
           style={styles.button}
           contentStyle={styles.buttonContent}
         >
           Continue
         </Button>
-        <Button onPress={() => router.replace("/home")}>Skip for now</Button>
+        <Button disabled={saving} onPress={skip}>Skip for now</Button>
       </View>
     </ScrollView>
   );
