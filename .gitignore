@@ -1,0 +1,28 @@
+node_modules/
+.expo/
+.expo-shared/
+dist/
+web-build/
+coverage/
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+*.log
+
+# Local databases
+*.sqlite3
