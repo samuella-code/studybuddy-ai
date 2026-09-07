@@ -1,10 +1,6 @@
 import { create } from "zustand";
 
-type User = {
-  id: string;
-  email: string;
-  name: string;
-};
+import type { User } from "../services/api";
 
 type AuthState = {
   user: User | null;
