@@ -1,14 +1,23 @@
 import { router } from "expo-router";
+import { useEffect, useState } from "react";
 import { ScrollView, StyleSheet, View } from "react-native";
 import { Button, Card, Chip, ProgressBar, Text } from "react-native-paper";
 
+import { loadSubjects } from "../services/subjects-storage";
 import { useAuthStore } from "../store/auth";
 
-const subjects = ["Mathematics", "Computer Science", "Biology"];
+const DEFAULT_SUBJECTS = ["Mathematics", "Computer Science", "Biology"];
 
 export default function HomeScreen() {
   const user = useAuthStore((state) => state.user);
   const clearSession = useAuthStore((state) => state.clearSession);
+  const [subjects, setSubjects] = useState<string[]>(DEFAULT_SUBJECTS);
+
+  useEffect(() => {
+    void loadSubjects().then((saved) => {
+      if (saved.length > 0) setSubjects(saved);
+    });
+  }, []);
 
   async function handleLogout() {
     await clearSession();
