@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from app.api.routes import auth
+from app.api.routes import auth, chat
 
 api_router = APIRouter(prefix="/api/v1")
 
@@ -11,3 +11,4 @@ def health() -> dict[str, str]:
 
 
 api_router.include_router(auth.router)
+api_router.include_router(chat.router)
