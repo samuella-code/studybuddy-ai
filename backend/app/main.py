@@ -1,6 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.api.router import api_router
+
 app = FastAPI(title="StudyBuddyAI API", version="0.1.0")
 
 app.add_middleware(
@@ -11,12 +13,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.include_router(api_router)
+
 
 @app.get("/health")
 def health() -> dict[str, str]:
     return {"status": "ok", "service": "studybuddy-api"}
-
-
-@app.get("/api/v1")
-def api_root() -> dict[str, str]:
-    return {"message": "StudyBuddyAI API is running"}
