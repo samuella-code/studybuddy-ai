@@ -1,0 +1,11 @@
+{
+  "name": "studybuddy-ai",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "mobile": "npm --prefix apps/mobile start",
+    "web": "npm --prefix apps/mobile run web",
+    "backend": "cd backend && uvicorn app.main:app --reload",
+    "backend:test": "cd backend && pytest"
+  }
+}
