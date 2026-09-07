@@ -13,9 +13,10 @@ export default function WelcomeScreen() {
         <Text style={styles.body}>
           Learn through conversation, practice with quizzes, build study plans, and track your progress.
         </Text>
-        <Button mode="contained" onPress={() => router.push("/home")} style={styles.button}>
+        <Button mode="contained" onPress={() => router.push("/register")} style={styles.button}>
           Get started
         </Button>
+        <Button onPress={() => router.push("/login")}>I already have an account</Button>
       </View>
     </View>
   );
@@ -27,5 +28,5 @@ const styles = StyleSheet.create({
   title: { fontWeight: "800", marginBottom: 8 },
   subtitle: { marginBottom: 16 },
   body: { lineHeight: 24, marginBottom: 28, opacity: 0.72 },
-  button: { borderRadius: 14, paddingVertical: 6 },
+  button: { borderRadius: 14, paddingVertical: 6, marginBottom: 8 },
 });
