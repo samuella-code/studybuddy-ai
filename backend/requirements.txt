@@ -6,6 +6,7 @@ sqlalchemy
 psycopg[binary]
 python-jose[cryptography]
 passlib[bcrypt]
+email-validator
 python-multipart
 pytest
 httpx
