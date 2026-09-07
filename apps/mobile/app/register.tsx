@@ -25,7 +25,7 @@ export default function RegisterScreen() {
     try {
       const response = await register(name.trim(), email.trim(), password);
       setSession(response.user, response.access_token);
-      router.replace("/home");
+      router.replace("/subjects");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unable to create your account");
     } finally {
@@ -37,7 +37,7 @@ export default function RegisterScreen() {
     <View style={styles.container}>
       <View style={styles.content}>
         <Text variant="displaySmall" style={styles.title}>Create your account</Text>
-        <Text style={styles.subtitle}>Let's personalize your StudyBuddy experience.</Text>
+        <Text style={styles.subtitle}>Let&apos;s personalize your StudyBuddy experience.</Text>
 
         <TextInput label="Name" value={name} onChangeText={setName} style={styles.input} />
         <TextInput label="Email" value={email} onChangeText={setEmail} autoCapitalize="none" keyboardType="email-address" style={styles.input} />
