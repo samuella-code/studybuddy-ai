@@ -54,4 +54,19 @@ export function getMe(accessToken: string) {
   return apiRequest<User>("/auth/me", {}, accessToken);
 }
 
+export function sendChatMessage(
+  message: string,
+  accessToken: string,
+  history: Array<{ role: "user" | "assistant"; content: string }> = [],
+) {
+  return apiRequest<{ message: string }>(
+    "/chat",
+    {
+      method: "POST",
+      body: JSON.stringify({ message, history }),
+    },
+    accessToken,
+  );
+}
+
 export { API_URL };
