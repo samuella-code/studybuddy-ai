@@ -6,8 +6,9 @@ class Settings(BaseSettings):
     jwt_secret_key: str = "change-me"
     ai_provider: str = "openai"
     ai_api_key: str = ""
-    ai_model: str = "gpt-5-mini"
+    ai_model: str = "gpt-5.6-luna"
     auto_create_tables: bool = False
+    cors_origins: str = "*"
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
