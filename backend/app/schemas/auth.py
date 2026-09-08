@@ -20,6 +20,14 @@ class UserResponse(BaseModel):
     id: UUID
     name: str
     email: EmailStr
+    learning_level: str = "beginner"
+    daily_goal_minutes: int = 60
+
+
+class UserProfileUpdate(BaseModel):
+    name: str | None = Field(default=None, min_length=2, max_length=120)
+    learning_level: str | None = Field(default=None, pattern="^(beginner|intermediate|advanced)$")
+    daily_goal_minutes: int | None = Field(default=None, ge=10, le=720)
 
 
 class AuthResponse(BaseModel):
