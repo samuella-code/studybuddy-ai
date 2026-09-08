@@ -1,112 +1,210 @@
-# StudyBuddyAI
+# StudyBuddy AI
 
-AI-powered, voice-first personal tutor for students.
-
-StudyBuddy helps students learn through natural conversation, personalized study plans, quizzes, flashcards, study materials, and progress tracking across web, Android, and iOS.
-
-## Current MVP
-
-The repository now contains a working foundation for:
-
-- React Native + Expo + TypeScript + Expo Router frontend
-- FastAPI + SQLAlchemy + PostgreSQL backend
-- Email/password registration and login
-- JWT bearer authentication
-- Persistent native/web sessions (SecureStore on native, local storage on web)
-- Personalized onboarding subject selection
-- Student dashboard
-- Authenticated AI text tutoring API
-- Conversation history sent to the AI provider
-- Text-to-speech for tutor responses
-- Interactive quiz mode
-- Flashcard study mode
-- Weekly study-plan UI
+StudyBuddy is a voice-first AI personal tutor for students. It provides natural tutoring conversations, AI-generated quizzes and flashcards, personalized study plans, study tracking, and study-material summarization from one Expo app running on web, Android, and iOS.
 
 ## Stack
 
-- Frontend: React Native + Expo + TypeScript + Expo Router
-- Web: Expo Web
-- State: Zustand
-- Server state: TanStack Query
-- Forms: React Hook Form
-- UI: React Native Paper
-- Backend: Python + FastAPI + Pydantic + SQLAlchemy
-- Database: PostgreSQL
-- AI: provider-agnostic service abstraction
-- Authentication: JWT + platform-aware secure token storage
+- **Client:** React Native, Expo SDK 57, TypeScript, Expo Router, React Native Paper, TanStack Query, Zustand
+- **Backend:** Python, FastAPI, Pydantic, SQLAlchemy 2.x
+- **Database:** PostgreSQL
+- **AI:** OpenAI Responses API behind a replaceable `AIProvider` abstraction
+- **Voice:** Expo Audio for recording, backend transcription, Expo Speech for spoken answers
+- **Documents:** Expo Document Picker + secure backend PDF/text extraction
 
-## Repository structure
+Expo SDK 57 targets React Native 0.86, React 19.2.3 and React Native Web 0.21.0; SDK 57 also requires Node 22.13.x or newer in the 22.x line. StudyBuddy is configured accordingly. citeturn0search1turn1view0
+
+## Features
+
+- Email/password authentication with hashed passwords and JWT access tokens
+- Persistent authenticated sessions
+- Learner profile and daily study goal
+- Subject selection and custom subjects
+- Voice-first AI tutor with listening, thinking, and speaking states
+- Text chat fallback
+- Conversation persistence and chat history
+- AI-generated multiple-choice quizzes with scoring and feedback
+- AI-generated flashcards with persistent storage
+- AI-generated study plans based on exam date, available time, confidence, and topics
+- Focus timer and study-session tracking
+- Progress and weekly activity dashboard
+- PDF, TXT, and Markdown study-material upload and AI summarization
+- Friendly handling for authentication, network, AI, microphone, upload, and validation failures
+- Responsive Expo Web layout
+
+## Project structure
 
 ```text
 studybuddy-ai/
 ├── apps/
-│   └── mobile/
+│   └── mobile/              # Expo universal client
+│       ├── app/             # Expo Router screens
+│       ├── services/        # API and local storage
+│       └── store/            # Zustand state
 ├── backend/
+│   ├── app/
+│   │   ├── ai/              # AI provider abstraction
+│   │   ├── api/routes/      # FastAPI endpoints
+│   │   ├── auth/             # JWT/password security
+│   │   ├── database/         # SQLAlchemy engine/session
+│   │   ├── models/           # Database models
+│   │   └── schemas/          # Pydantic validation schemas
+│   ├── tests/
+│   └── requirements.txt
 ├── docs/
-├── .env.example
-├── .gitignore
 ├── docker-compose.yml
-├── package.json
-└── README.md
+└── .env.example
 ```
 
-## Development roadmap
+## Requirements
 
-1. Foundation and project setup — complete
-2. Authentication — complete
-3. Dashboard UI — complete
-4. AI text chat — complete
-5. Persistent sessions — complete
-6. Text-to-speech — complete
-7. Speech-to-text / live voice conversation — next
-8. Conversation memory — next
-9. Database-backed study profile — next
-10. Quiz generation from AI — next
-11. Study planner persistence — next
-12. Flashcard persistence and spaced repetition — next
-13. Study materials / PDF ingestion — next
-14. Progress analytics — next
-15. Responsive web polish — next
-16. Testing, CI and deployment — next
+- Node.js **22.13+** (Node 22 recommended)
+- npm 10+
+- Python 3.12+
+- Docker Desktop/Engine + Compose (recommended for PostgreSQL)
+- An OpenAI API key for real AI features
 
-## Architecture
-
-```text
-React Native / Expo
-       │
-       ├── Web
-       ├── Android
-       └── iOS
-       │
-       ▼
-    FastAPI API
-       │
-       ├── Auth
-       ├── AI service
-       ├── Voice service
-       ├── Study services
-       └── PostgreSQL
-```
-
-## Environment
-
-Copy `.env.example` into the appropriate local environment file before running the backend. Never commit real API keys or production secrets.
-
-For physical-device testing, `EXPO_PUBLIC_API_URL` must point to the computer's LAN address rather than `localhost`.
-
-## Local commands
+## Frontend installation
 
 ```bash
-# frontend
-npm run web
-
-# backend
-npm run backend
-
-# backend tests
-npm run backend:test
+cd apps/mobile
+npm install
+npx expo install --fix
+npm run typecheck
 ```
 
-## License
+If `npm install` reports a network `ETIMEDOUT`, retry on a stable connection. Do not use `npm install --force` to bypass dependency validation. Expo's supported installation flow is `npx expo install`, and SDK 57's package versions should be kept aligned with SDK 57. citeturn0search2turn0search0turn2search0
 
-Private project during development.
+### Frontend dependencies
+
+The project declares these runtime packages:
+
+```text
+@tanstack/react-query
+expo
+expo-audio
+expo-constants
+expo-document-picker
+expo-linking
+expo-router
+expo-speech
+expo-status-bar
+react
+react-dom
+react-hook-form
+react-native
+react-native-paper
+react-native-safe-area-context
+react-native-screens
+react-native-web
+zustand
+```
+
+## Backend installation
+
+From the repository root:
+
+```bash
+cd backend
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+pip install -r requirements.txt
+```
+
+Then copy the environment template:
+
+```bash
+cd ..
+cp .env.example .env
+```
+
+Set a real `JWT_SECRET_KEY` and `AI_API_KEY` in `.env`.
+
+For local development, `AUTO_CREATE_TABLES=true` lets the API create the SQLAlchemy tables automatically. PostgreSQL is provided by Docker Compose.
+
+## Database
+
+```bash
+docker compose up -d db
+```
+
+The default local database is:
+
+```text
+postgresql+psycopg://studybuddy:studybuddy@localhost:5432/studybuddy
+```
+
+## Run the application
+
+Terminal 1:
+
+```bash
+cd backend
+source .venv/bin/activate
+uvicorn app.main:app --reload
+```
+
+Terminal 2:
+
+```bash
+cd apps/mobile
+npm run web
+```
+
+For Android/iOS development:
+
+```bash
+cd apps/mobile
+npm run android
+# or
+npm run ios
+```
+
+## Physical phone
+
+Set `EXPO_PUBLIC_API_URL` to your computer's LAN address, for example:
+
+```text
+EXPO_PUBLIC_API_URL=http://192.168.1.10:8000/api/v1
+```
+
+The phone and computer must be on the same network, and the backend port must be reachable from the phone.
+
+## Testing
+
+Frontend:
+
+```bash
+cd apps/mobile
+npm run typecheck
+```
+
+Backend:
+
+```bash
+cd backend
+source .venv/bin/activate
+pytest
+```
+
+API documentation is available at `http://localhost:8000/docs` while the backend is running.
+
+## AI and voice configuration
+
+AI credentials are **backend-only**. Never place an OpenAI key in an `EXPO_PUBLIC_*` variable and never commit a real `.env` file.
+
+Voice recording uses Expo Audio's cross-platform recorder and microphone permission configuration. Expo Speech handles spoken AI answers locally. For production builds, create native builds after changing native/config-plugin settings. citeturn1view0turn2search0
+
+## Deployment
+
+For production, deploy the FastAPI service and PostgreSQL database separately or through a managed platform, set production environment variables, use a strong secret, restrict CORS to the deployed web origin, and use EAS Build for Android/iOS.
+
+## Future improvements
+
+- Streaming AI responses
+- Realtime speech-to-speech tutoring
+- Spaced-repetition scheduling for flashcards
+- Rich PDF chunking/embeddings for very large documents
+- Push reminders and study notifications
+- Advanced topic mastery recommendations
+- Automated migration generation and deployment pipeline
