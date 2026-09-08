@@ -48,6 +48,7 @@ studybuddy-ai/
 │   │   ├── database/         # SQLAlchemy engine/session
 │   │   ├── models/           # Database models
 │   │   └── schemas/          # Pydantic validation schemas
+│   ├── alembic/              # Database migrations
 │   ├── tests/
 │   └── requirements.txt
 ├── docs/
@@ -101,29 +102,31 @@ zustand
 
 ## Backend installation
 
-From the repository root:
-
 ```bash
 cd backend
 python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install --upgrade pip
 pip install -r requirements.txt
-```
-
-Then create the local environment file:
-
-```bash
-cd ..
 cp .env.example .env
 ```
 
-Set a real `JWT_SECRET_KEY` and `AI_API_KEY` in `.env`.
+Set a real `JWT_SECRET_KEY` and `AI_API_KEY` in `backend/.env`.
 
 ## Database
 
+Start PostgreSQL with:
+
 ```bash
 docker compose up -d db
+```
+
+Then, for local development, either let the API create the tables with `AUTO_CREATE_TABLES=true`, or run the committed migration:
+
+```bash
+cd backend
+source .venv/bin/activate
+alembic upgrade head
 ```
 
 The default local database is:
@@ -131,8 +134,6 @@ The default local database is:
 ```text
 postgresql+psycopg://studybuddy:studybuddy@localhost:5432/studybuddy
 ```
-
-For local development, `AUTO_CREATE_TABLES=true` allows the API to create the tables automatically. For production, use a proper migration workflow before deployment.
 
 ## Run the application
 
@@ -148,6 +149,7 @@ Terminal 2:
 
 ```bash
 cd apps/mobile
+cp .env.example .env
 npm run web
 ```
 
@@ -162,7 +164,7 @@ npm run ios
 
 ## Physical phone
 
-Set `EXPO_PUBLIC_API_URL` to your computer's LAN address, for example:
+Edit `apps/mobile/.env` and set the API URL to your computer's LAN address, for example:
 
 ```text
 EXPO_PUBLIC_API_URL=http://192.168.1.10:8000/api/v1
@@ -197,7 +199,7 @@ Voice recording uses Expo Audio and the microphone permission configured in `app
 
 ## Deployment
 
-For production, deploy the FastAPI service and PostgreSQL database separately or through a managed platform, set production environment variables, use a strong secret, restrict CORS to the deployed web origin, and use EAS Build for Android/iOS.
+For production, deploy the FastAPI service and PostgreSQL database separately or through a managed platform, set production environment variables, use a strong secret, restrict CORS to the deployed web origin, run database migrations, and use EAS Build for Android/iOS.
 
 ## Future improvements
 
@@ -207,4 +209,3 @@ For production, deploy the FastAPI service and PostgreSQL database separately or
 - Rich PDF chunking/embeddings for very large documents
 - Push reminders and study notifications
 - Advanced topic mastery recommendations
-- Automated migration generation and deployment pipeline
