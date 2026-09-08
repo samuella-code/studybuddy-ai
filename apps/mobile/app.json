@@ -17,7 +17,8 @@
         {
           "microphonePermission": "Allow StudyBuddy to use your microphone so you can talk to your AI tutor."
         }
-      ]
+      ],
+      "expo-status-bar"
     ],
     "experiments": {
       "typedRoutes": true

@@ -1,13 +1,13 @@
 from datetime import datetime, timezone
 from uuid import UUID, uuid4
 
-from sqlalchemy import DateTime, ForeignKey, Integer, String, Text
+from sqlalchemy import DateTime, ForeignKey, Integer, JSON, String, Text
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.database.session import Base
 
-JsonType = JSONB
+JsonType = JSON().with_variant(JSONB(), "postgresql")
 
 
 class Conversation(Base):
@@ -59,7 +59,7 @@ class Quiz(Base):
     subject: Mapped[str] = mapped_column(String(100))
     topic: Mapped[str | None] = mapped_column(String(160), nullable=True)
     difficulty: Mapped[str] = mapped_column(String(30), default="medium")
-    questions: Mapped[list] = mapped_column(JSONType := JSONB, default=list)
+    questions: Mapped[list] = mapped_column(JsonType, default=list)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
 
@@ -71,7 +71,7 @@ class QuizAttempt(Base):
     user_id: Mapped[UUID] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
     score: Mapped[int] = mapped_column(Integer, default=0)
     total: Mapped[int] = mapped_column(Integer, default=0)
-    answers: Mapped[list] = mapped_column(JSONB, default=list)
+    answers: Mapped[list] = mapped_column(JsonType, default=list)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
 
@@ -96,8 +96,8 @@ class StudyPlan(Base):
     exam_date: Mapped[str] = mapped_column(String(30))
     daily_minutes: Mapped[int] = mapped_column(Integer)
     confidence: Mapped[str] = mapped_column(String(30), default="medium")
-    topics: Mapped[list] = mapped_column(JSONB, default=list)
-    plan: Mapped[list] = mapped_column(JSONB, default=list)
+    topics: Mapped[list] = mapped_column(JsonType, default=list)
+    plan: Mapped[list] = mapped_column(JsonType, default=list)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
 
@@ -134,7 +134,7 @@ class Progress(Base):
     current_streak: Mapped[int] = mapped_column(Integer, default=0)
     quiz_score: Mapped[int] = mapped_column(Integer, default=0)
     quizzes_taken: Mapped[int] = mapped_column(Integer, default=0)
-    weak_topics: Mapped[list] = mapped_column(JSONB, default=list)
-    strong_topics: Mapped[list] = mapped_column(JSONB, default=list)
-    weekly_activity: Mapped[dict] = mapped_column(JSONB, default=dict)
+    weak_topics: Mapped[list] = mapped_column(JsonType, default=list)
+    strong_topics: Mapped[list] = mapped_column(JsonType, default=list)
+    weekly_activity: Mapped[dict] = mapped_column(JsonType, default=dict)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))

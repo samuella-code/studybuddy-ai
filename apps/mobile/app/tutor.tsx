@@ -15,14 +15,20 @@ export default function TutorScreen() {
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);
   const [state, setState] = useState<TutorState>("idle");
+  const [microphoneReady, setMicrophoneReady] = useState(false);
   const recorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
   const recorderState = useAudioRecorderState(recorder);
 
   useEffect(() => {
     void (async () => {
-      const permission = await AudioModule.requestRecordingPermissionsAsync();
-      if (permission.granted) {
-        await setAudioModeAsync({ playsInSilentMode: true, allowsRecording: true });
+      try {
+        const permission = await AudioModule.requestRecordingPermissionsAsync();
+        if (permission.granted) {
+          await setAudioModeAsync({ playsInSilentMode: true, allowsRecording: true });
+          setMicrophoneReady(true);
+        }
+      } catch {
+        setMicrophoneReady(false);
       }
     })();
     return () => { Speech.stop(); };
@@ -75,6 +81,7 @@ export default function TutorScreen() {
       await setAudioModeAsync({ playsInSilentMode: true, allowsRecording: true });
       await recorder.prepareToRecordAsync();
       recorder.record();
+      setMicrophoneReady(true);
       setState("listening");
     } catch {
       setState("idle");
@@ -88,6 +95,11 @@ export default function TutorScreen() {
       const uri = recorder.uri;
       setState("processing");
       if (!uri || !accessToken) {
+        setState("idle");
+        return;
+      }
+      if (accessToken === "offline-demo") {
+        setMessages((current) => [...current, { role: "assistant", content: "Your recording is ready. Connect to the StudyBuddy server to turn voice into text, or type your question below while offline." }]);
         setState("idle");
         return;
       }
@@ -144,7 +156,7 @@ export default function TutorScreen() {
           />
         </View>
         <Text style={styles.voiceLabel}>
-          {state === "listening" ? "Listening…" : state === "processing" ? "Thinking…" : state === "speaking" ? "StudyBuddy is speaking…" : "Tap to talk"}
+          {state === "listening" ? "Listening…" : state === "processing" ? "Thinking…" : state === "speaking" ? "StudyBuddy is speaking…" : microphoneReady ? "Tap to talk" : "Allow microphone access to talk"}
         </Text>
       </View>
 
@@ -158,10 +170,10 @@ export default function TutorScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 20 },
+  container: { flex: 1, padding: 20, backgroundColor: "#F7F9F7" },
   header: { paddingTop: 18, paddingBottom: 12 },
-  title: { fontWeight: "800" },
-  subtitle: { opacity: 0.7, marginTop: 4, lineHeight: 21 },
+  title: { color: "#17211F", fontWeight: "800" },
+  subtitle: { color: "#44514D", marginTop: 4, lineHeight: 21 },
   messages: { gap: 12, paddingBottom: 12, flexGrow: 1 },
   emptyCard: { marginTop: 20, borderRadius: 18 },
   messageCard: { borderRadius: 16 },

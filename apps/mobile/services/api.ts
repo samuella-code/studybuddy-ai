@@ -18,7 +18,7 @@ export async function apiRequest<T>(path: string, options: RequestInit = {}, acc
   if (accessToken) headers.set("Authorization", `Bearer ${accessToken}`);
   let response: Response;
   try { response = await fetch(`${API_URL}${path}`, { ...options, headers }); }
-  catch { throw new Error("Unable to connect to StudyBuddy. Check your internet connection and try again."); }
+  catch { throw new Error("StudyBuddy server is unavailable. Start the backend and make sure your device is on the same Wi-Fi network."); }
   if (!response.ok) {
     let message = `Request failed (${response.status})`;
     try { const body = await response.json(); message = body.detail ?? message; } catch { /* non-JSON response */ }
