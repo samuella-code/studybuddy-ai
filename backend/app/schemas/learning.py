@@ -1,14 +1,18 @@
 from datetime import date
 from uuid import UUID
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
+
+
+class ORMBase(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
 
 
 class SubjectCreate(BaseModel):
     name: str = Field(min_length=1, max_length=100)
 
 
-class SubjectResponse(BaseModel):
+class SubjectResponse(ORMBase):
     id: UUID
     name: str
 
@@ -66,7 +70,7 @@ class FlashcardCreate(BaseModel):
     difficulty: str = Field(default="medium", pattern="^(easy|medium|hard)$")
 
 
-class FlashcardResponse(FlashcardCreate):
+class FlashcardResponse(ORMBase, FlashcardCreate):
     id: UUID
 
 
@@ -84,7 +88,7 @@ class StudyPlanCreate(BaseModel):
     topics: list[str] = Field(default_factory=list, max_length=50)
 
 
-class StudyPlanResponse(StudyPlanCreate):
+class StudyPlanResponse(ORMBase, StudyPlanCreate):
     id: UUID
     plan: list[dict]
 
@@ -95,8 +99,11 @@ class StudySessionCreate(BaseModel):
     minutes: int = Field(ge=1, le=1440)
 
 
-class StudySessionResponse(StudySessionCreate):
+class StudySessionResponse(BaseModel):
     id: UUID
+    subject: str
+    topic: str | None
+    minutes: int
     started_at: str
 
 
