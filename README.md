@@ -11,7 +11,7 @@ StudyBuddy is a voice-first AI personal tutor for students. It provides natural 
 - **Voice:** Expo Audio for recording, backend transcription, Expo Speech for spoken answers
 - **Documents:** Expo Document Picker + secure backend PDF/text extraction
 
-Expo SDK 57 targets React Native 0.86, React 19.2.3 and React Native Web 0.21.0; SDK 57 also requires Node 22.13.x or newer in the 22.x line. StudyBuddy is configured accordingly. citeturn0search1turn1view0
+Expo SDK 57 targets React Native 0.86, React 19.2.3 and React Native Web 0.21.0. The project is configured for that combination.
 
 ## Features
 
@@ -57,7 +57,7 @@ studybuddy-ai/
 
 ## Requirements
 
-- Node.js **22.13+** (Node 22 recommended)
+- Node.js 22+
 - npm 10+
 - Python 3.12+
 - Docker Desktop/Engine + Compose (recommended for PostgreSQL)
@@ -72,11 +72,11 @@ npx expo install --fix
 npm run typecheck
 ```
 
-If `npm install` reports a network `ETIMEDOUT`, retry on a stable connection. Do not use `npm install --force` to bypass dependency validation. Expo's supported installation flow is `npx expo install`, and SDK 57's package versions should be kept aligned with SDK 57. citeturn0search2turn0search0turn2search0
+The `package.json` keeps Expo SDK packages aligned with SDK 57. Prefer `npx expo install` for Expo-managed dependencies instead of forcing npm through peer-dependency conflicts.
 
 ### Frontend dependencies
 
-The project declares these runtime packages:
+Runtime packages:
 
 ```text
 @tanstack/react-query
@@ -111,7 +111,7 @@ python -m pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
-Then copy the environment template:
+Then create the local environment file:
 
 ```bash
 cd ..
@@ -119,8 +119,6 @@ cp .env.example .env
 ```
 
 Set a real `JWT_SECRET_KEY` and `AI_API_KEY` in `.env`.
-
-For local development, `AUTO_CREATE_TABLES=true` lets the API create the SQLAlchemy tables automatically. PostgreSQL is provided by Docker Compose.
 
 ## Database
 
@@ -133,6 +131,8 @@ The default local database is:
 ```text
 postgresql+psycopg://studybuddy:studybuddy@localhost:5432/studybuddy
 ```
+
+For local development, `AUTO_CREATE_TABLES=true` allows the API to create the tables automatically. For production, use a proper migration workflow before deployment.
 
 ## Run the application
 
@@ -193,7 +193,7 @@ API documentation is available at `http://localhost:8000/docs` while the backend
 
 AI credentials are **backend-only**. Never place an OpenAI key in an `EXPO_PUBLIC_*` variable and never commit a real `.env` file.
 
-Voice recording uses Expo Audio's cross-platform recorder and microphone permission configuration. Expo Speech handles spoken AI answers locally. For production builds, create native builds after changing native/config-plugin settings. citeturn1view0turn2search0
+Voice recording uses Expo Audio and the microphone permission configured in `app.json`. Expo Speech handles spoken AI answers locally. Native microphone configuration takes effect in development/release builds after the Expo config is applied.
 
 ## Deployment
 
