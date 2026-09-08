@@ -7,8 +7,26 @@ import { sendChatMessage, transcribeVoice } from "../services/api";
 import { useAuthStore } from "../store/auth";
 
 type Message = { role: "user" | "assistant"; content: string };
-
 type TutorState = "idle" | "listening" | "processing" | "speaking";
+
+const OFFLINE_TOKEN = "offline-demo";
+
+function offlineTutorReply(message: string): string {
+  const prompt = message.toLowerCase();
+  if (prompt.includes("quiz") || prompt.includes("test me")) {
+    return "Absolutely. Offline quiz mode is ready.\n\nQuestion 1: What is the powerhouse of the cell?\n\nA) Nucleus\nB) Mitochondrion\nC) Ribosome\nD) Cell membrane\n\nReply with A, B, C, or D and I'll check your answer.";
+  }
+  if (prompt.includes("array")) {
+    return "An array is a collection of values stored together in an ordered list.\n\nThink of it like a row of labelled lockers: each locker has a position, and you can use that position to find what is inside.\n\nExample: [10, 20, 30] has 10 at index 0, 20 at index 1, and 30 at index 2.\n\nIf you'd like, ask me for an example, a simpler explanation, or a quick quiz.";
+  }
+  if (prompt.includes("photosynthesis")) {
+    return "Photosynthesis is the process plants use to make food from light energy.\n\nIn simple terms: plants take in carbon dioxide and water, use sunlight as energy, and produce glucose and oxygen.\n\nA useful memory trick is: light + water + carbon dioxide → food + oxygen.";
+  }
+  if (prompt.includes("summarize") || prompt.includes("summary")) {
+    return "Here is a simple study summary: focus on the main definition, understand one real example, then test yourself without looking at your notes. This offline tutor can keep helping you practise even when the server is unavailable.";
+  }
+  return "I'm in offline study mode right now, so I can still help you practise. Try asking me about arrays, photosynthesis, a concept you want simplified, an example, or say “quiz me”. When you're back online, StudyBuddy will use the full AI tutor and your saved learning data.";
+}
 
 export default function TutorScreen() {
   const accessToken = useAuthStore((state) => state.accessToken);
@@ -18,6 +36,8 @@ export default function TutorScreen() {
   const [microphoneReady, setMicrophoneReady] = useState(false);
   const recorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
   const recorderState = useAudioRecorderState(recorder);
+
+  const offlineMode = accessToken === OFFLINE_TOKEN;
 
   useEffect(() => {
     void (async () => {
@@ -34,7 +54,10 @@ export default function TutorScreen() {
     return () => { Speech.stop(); };
   }, []);
 
-  const canSend = useMemo(() => Boolean(input.trim() && accessToken && state !== "processing" && state !== "speaking"), [input, accessToken, state]);
+  const canSend = useMemo(
+    () => Boolean(input.trim() && accessToken && state !== "processing" && state !== "speaking"),
+    [input, accessToken, state],
+  );
 
   async function handleSend(text = input) {
     const message = text.trim();
@@ -43,12 +66,16 @@ export default function TutorScreen() {
     setMessages(nextMessages);
     setInput("");
     setState("processing");
+
     try {
-      const result = await sendChatMessage(message, accessToken, messages);
+      const result = offlineMode
+        ? { message: offlineTutorReply(message) }
+        : await sendChatMessage(message, accessToken, messages);
       setMessages([...nextMessages, { role: "assistant", content: result.message }]);
       speak(result.message);
-    } catch (error) {
-      setMessages([...nextMessages, { role: "assistant", content: error instanceof Error ? error.message : "Something went wrong. Please try again." }]);
+    } catch {
+      const fallback = offlineTutorReply(message);
+      setMessages([...nextMessages, { role: "assistant", content: fallback }]);
       setState("idle");
     }
   }
@@ -93,13 +120,16 @@ export default function TutorScreen() {
     try {
       await recorder.stop();
       const uri = recorder.uri;
-      setState("processing");
       if (!uri || !accessToken) {
         setState("idle");
         return;
       }
-      if (accessToken === "offline-demo") {
-        setMessages((current) => [...current, { role: "assistant", content: "Your recording is ready. Connect to the StudyBuddy server to turn voice into text, or type your question below while offline." }]);
+      setState("processing");
+      if (offlineMode) {
+        setMessages((current) => [
+          ...current,
+          { role: "assistant", content: "Your voice recording was captured. Offline mode can't transcribe audio without a speech model, but you can type the question below and I'll keep helping you." },
+        ]);
         setState("idle");
         return;
       }
@@ -118,75 +148,104 @@ export default function TutorScreen() {
   return (
     <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === "ios" ? "padding" : undefined}>
       <View style={styles.header}>
-        <Text variant="headlineSmall" style={styles.title}>StudyBuddy Tutor</Text>
-        <Text style={styles.subtitle}>Talk naturally, ask follow-ups, and learn step by step.</Text>
+        <View style={styles.headerRow}>
+          <View style={styles.headerCopy}>
+            <Text variant="headlineSmall" style={styles.title}>StudyBuddy Tutor</Text>
+            <Text style={styles.subtitle}>Talk naturally, ask follow-ups, and learn step by step.</Text>
+          </View>
+          <View style={styles.modePill}>
+            <View style={[styles.modeDot, offlineMode ? styles.offlineDot : styles.onlineDot]} />
+            <Text style={styles.modeText}>{offlineMode ? "Offline" : "Online"}</Text>
+          </View>
+        </View>
       </View>
 
       <ScrollView contentContainerStyle={styles.messages} keyboardShouldPersistTaps="handled">
         {messages.length === 0 ? (
-          <Card style={styles.emptyCard}>
+          <Card style={styles.emptyCard} mode="elevated">
             <Card.Content>
-              <Text variant="titleMedium">What are you studying today?</Text>
-              <Text style={styles.muted}>Try: “Explain arrays”, “Give me an example”, or “Quiz me”.</Text>
+              <Text variant="titleLarge" style={styles.cardTitle}>What are you studying today?</Text>
+              <Text style={styles.muted}>Try “Explain arrays”, “Give me an example”, “Make it simpler”, or “Quiz me”.</Text>
             </Card.Content>
           </Card>
         ) : messages.map((message, index) => (
-          <Card key={`${message.role}-${index}`} style={[styles.messageCard, message.role === "user" && styles.userCard]}>
+          <Card key={`${message.role}-${index}`} style={[styles.messageCard, message.role === "user" ? styles.userCard : styles.assistantCard]} mode="elevated">
             <Card.Content>
               <View style={styles.messageHeader}>
-                <Text variant="labelMedium">{message.role === "user" ? "You" : "StudyBuddy"}</Text>
+                <Text variant="labelLarge" style={message.role === "user" ? styles.userLabel : styles.assistantLabel}>
+                  {message.role === "user" ? "You" : "StudyBuddy"}
+                </Text>
                 {message.role === "assistant" && <IconButton icon="volume-high" size={19} onPress={() => speak(message.content)} accessibilityLabel="Read answer aloud" />}
               </View>
               <Text style={styles.messageText}>{message.content}</Text>
             </Card.Content>
           </Card>
         ))}
-        {state === "processing" && <ActivityIndicator style={styles.loader} />}
+        {state === "processing" && (
+          <View style={styles.thinkingRow}>
+            <ActivityIndicator size="small" />
+            <Text style={styles.thinkingText}>StudyBuddy is thinking…</Text>
+          </View>
+        )}
       </ScrollView>
 
       <View style={styles.voiceArea}>
-        <View style={styles.voiceCircle}>
+        <View style={[styles.voiceRing, state === "listening" && styles.listeningRing]}>
           <IconButton
             icon={state === "listening" ? "stop" : state === "speaking" ? "volume-high" : "microphone"}
             mode="contained"
-            size={36}
+            size={38}
             onPress={state === "listening" ? stopRecording : state === "speaking" ? stopSpeaking : startRecording}
             disabled={state === "processing"}
             accessibilityLabel={state === "listening" ? "Stop listening" : state === "speaking" ? "Stop speaking" : "Tap to talk"}
           />
         </View>
         <Text style={styles.voiceLabel}>
-          {state === "listening" ? "Listening…" : state === "processing" ? "Thinking…" : state === "speaking" ? "StudyBuddy is speaking…" : microphoneReady ? "Tap to talk" : "Allow microphone access to talk"}
+          {state === "listening" ? "Listening…" : state === "processing" ? "Thinking…" : state === "speaking" ? "StudyBuddy is speaking…" : microphoneReady ? "Tap to talk" : "Tap to allow microphone"}
         </Text>
       </View>
 
       <View style={styles.composer}>
-        <TextInput mode="outlined" value={input} onChangeText={setInput} placeholder="Or type your question…" multiline style={styles.input} disabled={!accessToken || state === "processing" || state === "speaking"} />
-        <Button mode="contained" onPress={() => void handleSend()} disabled={!canSend} style={styles.send}>Send</Button>
+        <TextInput mode="outlined" value={input} onChangeText={setInput} placeholder="Ask StudyBuddy anything…" placeholderTextColor="#6B7672" multiline style={styles.input} disabled={!accessToken || state === "processing" || state === "speaking"} />
+        <Button mode="contained" onPress={() => void handleSend()} disabled={!canSend} style={styles.send} contentStyle={styles.sendContent}>Send</Button>
       </View>
-      {recorderState.isRecording ? <Text style={styles.recordingHint}>Recording in progress. Tap the stop button when you're finished.</Text> : null}
+      {recorderState.isRecording ? <Text style={styles.recordingHint}>Recording in progress · tap stop when you're finished.</Text> : null}
     </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 20, backgroundColor: "#F7F9F7" },
-  header: { paddingTop: 18, paddingBottom: 12 },
-  title: { color: "#17211F", fontWeight: "800" },
-  subtitle: { color: "#44514D", marginTop: 4, lineHeight: 21 },
-  messages: { gap: 12, paddingBottom: 12, flexGrow: 1 },
-  emptyCard: { marginTop: 20, borderRadius: 18 },
-  messageCard: { borderRadius: 16 },
-  userCard: { alignSelf: "flex-end", width: "90%" },
+  container: { flex: 1, padding: 20, backgroundColor: "#F6F8F7" },
+  header: { paddingTop: 18, paddingBottom: 14 },
+  headerRow: { flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between", gap: 12 },
+  headerCopy: { flex: 1 },
+  title: { color: "#10201C", fontWeight: "800" },
+  subtitle: { color: "#354641", marginTop: 5, lineHeight: 22, fontSize: 14 },
+  modePill: { flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 10, paddingVertical: 7, borderRadius: 20, backgroundColor: "#FFFFFF", borderWidth: 1, borderColor: "#DCE5E1" },
+  modeDot: { width: 7, height: 7, borderRadius: 4 },
+  onlineDot: { backgroundColor: "#136F63" },
+  offlineDot: { backgroundColor: "#A44A3F" },
+  modeText: { color: "#273733", fontSize: 12, fontWeight: "700" },
+  messages: { gap: 12, paddingBottom: 10, flexGrow: 1 },
+  emptyCard: { marginTop: 20, borderRadius: 20, backgroundColor: "#FFFFFF" },
+  cardTitle: { color: "#10201C", fontWeight: "800" },
+  messageCard: { borderRadius: 18 },
+  assistantCard: { backgroundColor: "#FFFFFF" },
+  userCard: { alignSelf: "flex-end", width: "90%", backgroundColor: "#DDF3ED" },
   messageHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
-  messageText: { marginTop: 2, lineHeight: 22 },
-  muted: { marginTop: 8, opacity: 0.7, lineHeight: 21 },
-  loader: { marginVertical: 10 },
-  voiceArea: { alignItems: "center", paddingVertical: 6 },
-  voiceCircle: { borderRadius: 48 },
-  voiceLabel: { marginTop: 2, fontWeight: "600", opacity: 0.7 },
+  userLabel: { color: "#0D6257", fontWeight: "800" },
+  assistantLabel: { color: "#A44A3F", fontWeight: "800" },
+  messageText: { marginTop: 2, lineHeight: 24, fontSize: 16, color: "#182521" },
+  muted: { marginTop: 8, color: "#42534D", lineHeight: 22, fontSize: 14 },
+  thinkingRow: { flexDirection: "row", alignItems: "center", gap: 10, paddingVertical: 10, paddingHorizontal: 4 },
+  thinkingText: { color: "#42534D", fontWeight: "600" },
+  voiceArea: { alignItems: "center", paddingVertical: 8 },
+  voiceRing: { width: 88, height: 88, borderRadius: 44, alignItems: "center", justifyContent: "center", backgroundColor: "#DDF3ED", borderWidth: 1, borderColor: "#B8DED5" },
+  listeningRing: { transform: [{ scale: 1.06 }], backgroundColor: "#F8E4E0", borderColor: "#E5B8AF" },
+  voiceLabel: { marginTop: 7, color: "#263934", fontWeight: "700", fontSize: 14 },
   composer: { gap: 10, paddingTop: 8, paddingBottom: 4 },
-  input: { maxHeight: 120 },
-  send: { borderRadius: 12 },
-  recordingHint: { textAlign: "center", opacity: 0.6, fontSize: 12, paddingTop: 4 },
+  input: { maxHeight: 120, backgroundColor: "#FFFFFF" },
+  send: { borderRadius: 14 },
+  sendContent: { paddingVertical: 4 },
+  recordingHint: { textAlign: "center", color: "#53635E", fontSize: 12, paddingTop: 5 },
 });
