@@ -1,3 +1,5 @@
+import { Platform } from "react-native";
+
 const API_URL = process.env.EXPO_PUBLIC_API_URL ?? "http://localhost:8000/api/v1";
 
 export type User = { id: string; email: string; name: string; learning_level?: string; daily_goal_minutes?: number };
