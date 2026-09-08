@@ -18,6 +18,13 @@
           "microphonePermission": "Allow StudyBuddy to use your microphone so you can talk to your AI tutor."
         }
       ],
+      [
+        "expo-speech-recognition",
+        {
+          "microphonePermission": "Allow StudyBuddy to use your microphone so you can talk to your AI tutor.",
+          "speechRecognitionPermission": "Allow StudyBuddy to convert your speech into text."
+        }
+      ],
       "expo-status-bar"
     ],
     "experiments": {
