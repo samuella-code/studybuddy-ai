@@ -13,12 +13,6 @@
     "plugins": [
       "expo-router",
       [
-        "expo-audio",
-        {
-          "microphonePermission": "Allow StudyBuddy to use your microphone so you can talk to your AI tutor."
-        }
-      ],
-      [
         "expo-speech-recognition",
         {
           "microphonePermission": "Allow StudyBuddy to use your microphone so you can talk to your AI tutor.",
