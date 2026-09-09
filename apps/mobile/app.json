@@ -6,9 +6,17 @@
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",
     "scheme": "studybuddy",
-    "web": {
-      "bundler": "metro",
-      "output": "single"
+    "web": { "bundler": "metro", "output": "single" },
+    "android": {
+      "package": "com.studybuddy.app",
+      "permissions": ["RECORD_AUDIO"]
+    },
+    "ios": {
+      "bundleIdentifier": "com.studybuddy.app",
+      "infoPlist": {
+        "NSMicrophoneUsageDescription": "StudyBuddy uses your microphone so you can talk naturally to your AI tutor.",
+        "NSSpeechRecognitionUsageDescription": "StudyBuddy uses speech recognition to turn your voice into study questions."
+      }
     },
     "plugins": [
       "expo-router",
@@ -21,8 +29,6 @@
       ],
       "expo-status-bar"
     ],
-    "experiments": {
-      "typedRoutes": true
-    }
+    "experiments": { "typedRoutes": true }
   }
 }
