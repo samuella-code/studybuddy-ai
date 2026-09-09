@@ -1,3 +1,7 @@
+project link
+http://localhost:8081/home
+
+
 # StudyBuddy AI
 
 StudyBuddy is a voice-first AI personal tutor for students. It provides natural tutoring conversations, AI-generated quizzes and flashcards, personalized study plans, study tracking, and study-material summarization from one Expo app running on web, Android, and iOS.
