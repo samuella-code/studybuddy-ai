@@ -20,7 +20,12 @@ function offlineResponse<T>(path: string, options: RequestInit): T | undefined {
     return { access_token: "offline-demo", token_type: "bearer", user: OFFLINE_USER } as T;
   }
   if (path === "/users/me") return OFFLINE_USER as T;
-  if (path === "/chat") return { message: "You're currently offline. I can still help you practise with the StudyBuddy offline tutor. Try asking about arrays, photosynthesis, an example, a simpler explanation, or say “quiz me”." } as T;
+  if (path === "/chat") {
+    const body = JSON.parse(String(options.body ?? "{}")) as { message?: string; history?: Array<{ role: string; content: string }> };
+    const message = (body.message ?? "").trim();
+    const history = body.history ?? [];
+    return { message: offlineTutorReply(message, history) } as T;
+  }
   if (path === "/chat/history") return [] as T;
   if (path === "/subjects" && method === "GET") {
     return ["Mathematics", "Computer Science", "Biology", "Chemistry", "Physics", "English", "Economics", "General Knowledge"].map((name, index) => ({ id: `offline-subject-${index}`, name })) as T;
@@ -45,7 +50,7 @@ function offlineResponse<T>(path: string, options: RequestInit): T | undefined {
       subject: body.subject ?? "General Knowledge",
       topic: body.topic ?? "Study Skills",
       question: `What is one important idea about ${body.topic ?? "this topic"}?`,
-      answer: `Review the definition, understand a simple example, and explain the idea in your own words.`,
+      answer: "Review the definition, understand a simple example, and explain the idea in your own words.",
       difficulty: "medium",
     })) as T;
   }
@@ -77,8 +82,53 @@ function offlineResponse<T>(path: string, options: RequestInit): T | undefined {
   }
   if (path.startsWith("/quizzes/") && path.endsWith("/submit")) return { score: 0, total: 1, percentage: 0, feedback: ["Offline quiz results are available. Review the explanation and try again."] } as T;
   if (path === "/materials/upload") return { id: `offline-material-${Date.now()}`, filename: "Offline study material", content_type: "text/plain", characters: 0 } as T;
-  if (path === "/materials/summarize") return { material_id: "offline-material", summary: "Offline summary is available after the material is processed locally. For full AI document analysis, reconnect to the StudyBuddy server." } as T;
+  if (path === "/materials/summarize") return { material_id: "offline-material", summary: "Offline summary is available after the material is processed locally. Full AI document analysis is available when the StudyBuddy server is connected." } as T;
   return undefined;
+}
+
+function offlineTutorReply(text: string, history: Array<{ role: string; content: string }>): string {
+  const p = text.toLowerCase().trim();
+  const lastAssistant = [...history].reverse().find((item) => item.role === "assistant")?.content ?? "";
+
+  if (!p) return "I'm listening. Tell me the topic you want to study.";
+  if (/^(hi|hello|hey|good morning|good afternoon|good evening)\b/.test(p)) {
+    return "Hey! I'm StudyBuddy 👋 What are you studying today? You can ask me to explain a topic, simplify it, give you an example, summarize it, or quiz you.";
+  }
+  if (p.includes("quiz") || p.includes("test me") || p.includes("test me on")) {
+    return "Absolutely — quiz mode is on. 🧠\n\nQuestion 1: What is the powerhouse of the cell?\n\nA) Nucleus\nB) Mitochondrion\nC) Ribosome\nD) Cell membrane\n\nSay or type A, B, C, or D. I'll check it and explain why.";
+  }
+  if (/\b(a|b|c|d)\b/.test(p) && lastAssistant.includes("powerhouse of the cell")) {
+    if (p.includes("b")) return "Correct! 🎉 The mitochondrion is the organelle that produces most of a cell's usable energy.\n\nMemory trick: mitochondria = the cell's power stations. Want another question?";
+    return "Not quite. The correct answer is B) Mitochondrion. The nucleus controls the cell, while mitochondria produce most of its usable energy. Want me to give you another question?";
+  }
+  if (p.includes("array") || p.includes("arrays")) {
+    return "Let's learn arrays simply.\n\nAn array is an ordered collection of values stored together. Think of it as a row of numbered lockers. Each locker holds one value, and its position is called an index.\n\nExample: [10, 20, 30]\n• index 0 → 10\n• index 1 → 20\n• index 2 → 30\n\nIn most programming languages, arrays make it easy to store and access a list of related values.\n\nWant me to explain arrays with a real-life analogy or give you a quick practice question?";
+  }
+  if (p.includes("photosynthesis")) {
+    return "Photosynthesis is how green plants make food using light energy. 🌱\n\nSimple version: sunlight + water + carbon dioxide → glucose + oxygen.\n\nThink of a leaf as a tiny food factory: sunlight provides the energy, water and carbon dioxide are the raw materials, and glucose is the food produced.\n\nWant me to explain the process step by step or quiz you on it?";
+  }
+  if (p.includes("algebra")) {
+    return "Algebra is about finding unknown values and keeping equations balanced.\n\nExample: x + 3 = 7\nSubtract 3 from both sides → x = 4.\n\nThink of an equation like a balanced scale: whatever you do to one side, you do to the other.\n\nWant a slightly harder example?";
+  }
+  if (p.includes("simpl") || p.includes("beginner") || p.includes("don't understand") || p.includes("dont understand") || p.includes("confus")) {
+    return "No worries — let's slow it down. 💜\n\nI'll use simple words, one idea at a time, and connect it to something familiar. Tell me the exact part that is confusing, and I'll explain only that part first.";
+  }
+  if (p.includes("example")) {
+    return "Of course. Let's use a real-life example. Imagine you're organising books into labelled shelves: each shelf has a position, and you can quickly find a book by its position. That's the basic idea behind many programming data structures.\n\nIf you tell me the exact topic, I'll make the example specific to it.";
+  }
+  if (p.includes("summary") || p.includes("summarize") || p.includes("recap")) {
+    return history.length
+      ? "Here's our quick recap: we started with the topic, broke down the main idea, and worked through examples. 💜\n\nThe best next step is to explain the concept back to me in your own words. I'll tell you what you got right and what to improve."
+      : "A good study summary has three things: the main idea, one useful example, and a quick self-test. Tell me the topic and I'll help you build the summary.";
+  }
+  if (p.includes("flashcard")) {
+    return "Let's create a useful flashcard.\n\nFront: What is the key idea?\nBack: The definition + one simple example.\n\nTell me the topic and I'll help you make a set you can review offline.";
+  }
+  if (p.includes("thank")) return "You're welcome! 💜 Keep going — you're doing well. What should we tackle next?";
+  if (p.includes("what can you") || p.includes("help me") || p.includes("what do you do")) {
+    return "I'm your StudyBuddy. I can explain concepts, simplify difficult topics, work through examples, quiz you, help you revise, create study plans, and make flashcards.\n\nTry: ‘Explain recursion’, ‘Make this simpler’, or ‘Quiz me on biology’.";
+  }
+  return "I can help you study that. 💜 Start by telling me the subject and topic, and I'll break it into simple steps. If you already have a question, say it naturally — you don't need to phrase it perfectly.";
 }
 
 export async function apiRequest<T>(path: string, options: RequestInit = {}, accessToken?: string): Promise<T> {
